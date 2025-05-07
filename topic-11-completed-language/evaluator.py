@@ -3,6 +3,7 @@ from parser import parse
 from pprint import pprint
 import copy
 
+
 def type_of(*args):
     def single_type(x):
         if isinstance(x, bool):
@@ -18,7 +19,9 @@ def type_of(*args):
         if x is None:
             return "null"
         assert False, f"Unknown type for value: {x}"
+
     return "-".join(single_type(arg) for arg in args)
+
 
 def is_truthy(x):
     if x in [None, False, 0, 0.0, ""]:
@@ -26,6 +29,7 @@ def is_truthy(x):
     if isinstance(x, (list, dict)) and len(x) == 0:
         return False
     return True
+
 
 def ast_to_string(ast):
     s = ""
@@ -50,17 +54,38 @@ def ast_to_string(ast):
         return "{" + ",".join(items) + "}"
     if ast["tag"] == "identifier":
         return str(ast["value"])
-    if ast["tag"] in ["+","-","/","*","&&","||","and","or","<",">","<=",">=","==","!="]:
-        return  "(" + ast_to_string(ast["left"]) + ast["tag"] + ast_to_string(ast["right"]) + ")"
+    if ast["tag"] in [
+        "+",
+        "-",
+        "/",
+        "*",
+        "&&",
+        "||",
+        "and",
+        "or",
+        "<",
+        ">",
+        "<=",
+        ">=",
+        "==",
+        "!=",
+    ]:
+        return (
+            "("
+            + ast_to_string(ast["left"])
+            + ast["tag"]
+            + ast_to_string(ast["right"])
+            + ")"
+        )
     if ast["tag"] in ["negate"]:
-        return  "(-" + ast_to_string(ast["value"]) + ")"
-    if ast["tag"] in ["not","!"]:
-        return  "(" + ast["tag"] + " " + ast_to_string(ast["value"]) + ")"
+        return "(-" + ast_to_string(ast["value"]) + ")"
+    if ast["tag"] in ["not", "!"]:
+        return "(" + ast["tag"] + " " + ast_to_string(ast["value"]) + ")"
     if ast["tag"] == "print":
         if ast["value"]:
             return "print (" + ast_to_string(ast["value"]) + ")"
         else:
-            return "print ()" 
+            return "print ()"
 
     if ast["tag"] == "assert":
         s = "assert (" + ast_to_string(ast["condition"]) + ")"
@@ -68,12 +93,24 @@ def ast_to_string(ast):
             s = s + "," + ast_to_string(ast["explanation"]) + ")"
 
     if ast["tag"] == "if":
-        s = "if (" + ast_to_string(ast["condition"]) + ") {" + ast_to_string(ast["then"]) + "}"
+        s = (
+            "if ("
+            + ast_to_string(ast["condition"])
+            + ") {"
+            + ast_to_string(ast["then"])
+            + "}"
+        )
         if ast["else"]:
             s = s + " else {" + ast_to_string(ast["else"]) + "}"
 
     if ast["tag"] == "while":
-        s = "while (" + ast_to_string(ast["condition"]) + ") {" + ast_to_string(ast["do"]) + "}"
+        s = (
+            "while ("
+            + ast_to_string(ast["condition"])
+            + ") {"
+            + ast_to_string(ast["do"])
+            + "}"
+        )
 
     if ast["tag"] == "statement_list":
         items = []
@@ -111,32 +148,41 @@ def ast_to_string(ast):
         if ast["value"]:
             return "return " + ast_to_string(ast["value"])
         else:
-            return "return" 
+            return "return"
 
     assert False, f"Unknown tag [{ast['tag']}] in AST"
 
-__builtin_functions = [
-    "head","tail","length","keys"
-]
+
+__builtin_functions = ["head", "tail", "length", "keys"]
+
 
 def evaluate_builtin_function(function_name, args):
     if function_name == "head":
-        assert len(args) == 1 and isinstance(args[0], list), "head() requires a single list argument"
+        assert len(args) == 1 and isinstance(
+            args[0], list
+        ), "head() requires a single list argument"
         return (args[0][0] if args[0] else None), None
 
     if function_name == "tail":
-        assert len(args) == 1 and isinstance(args[0], list), "tail() requires a single list argument"
+        assert len(args) == 1 and isinstance(
+            args[0], list
+        ), "tail() requires a single list argument"
         return args[0][1:], None
 
     if function_name == "length":
-        assert len(args) == 1 and isinstance(args[0], (list, dict, str)), "length() requires list, object, or string"
+        assert len(args) == 1 and isinstance(
+            args[0], (list, dict, str)
+        ), "length() requires list, object, or string"
         return len(args[0]), None
 
     if function_name == "keys":
-        assert len(args) == 1 and isinstance(args[0], dict), "keys() requires an object argument"
+        assert len(args) == 1 and isinstance(
+            args[0], dict
+        ), "keys() requires an object argument"
         return list(args[0].keys()), None
 
     assert False, f"Unknown builtin function '{function_name}'"
+
 
 def evaluate(ast, environment):
     if ast["tag"] == "number":
@@ -161,7 +207,7 @@ def evaluate(ast, environment):
         for item in ast["items"]:
             result, _ = evaluate(item, environment)
             items.append(result)
-        return items, None        
+        return items, None
     if ast["tag"] == "object":
         object = {}
         for item in ast["items"]:
@@ -169,7 +215,7 @@ def evaluate(ast, environment):
             assert type(key) is str, "Object key must be a string"
             value, _ = evaluate(item["value"], environment)
             object[key] = value
-        return object, None        
+        return object, None
 
     if ast["tag"] == "identifier":
         identifier = ast["value"]
@@ -221,7 +267,7 @@ def evaluate(ast, environment):
             assert right_value != 0, "Division by zero"
             return left_value / right_value, None
         raise Exception(f"Illegal types for {ast['tag']}:{types}")
-    
+
     if ast["tag"] == "negate":
         value, _ = evaluate(ast["value"], environment)
         types = type_of(value)
@@ -262,7 +308,7 @@ def evaluate(ast, environment):
         left_value, _ = evaluate(ast["left"], environment)
         right_value, _ = evaluate(ast["right"], environment)
         return left_value == right_value, None
-    
+
     if ast["tag"] == "!=":
         left_value, _ = evaluate(ast["left"], environment)
         right_value, _ = evaluate(ast["right"], environment)
@@ -285,8 +331,8 @@ def evaluate(ast, environment):
     if ast["tag"] == "assert":
         if ast["condition"]:
             value, _ = evaluate(ast["condition"], environment)
-            if not(value):
-                raise(Exception("Assertion failed:",ast_to_string(ast["condition"])))
+            if not (value):
+                raise (Exception("Assertion failed:", ast_to_string(ast["condition"])))
         return "\n", None
 
     if ast["tag"] == "if":
@@ -338,7 +384,7 @@ def evaluate(ast, environment):
 
         if function.get("tag") == "builtin":
             return evaluate_builtin_function(function["name"], argument_values)
-        
+
         # regular function call:
         local_environment = {
             name["value"]: val
@@ -350,7 +396,6 @@ def evaluate(ast, environment):
             return value, False
         else:
             return None, False
-
 
     if ast["tag"] == "complex":
         base, _ = evaluate(ast["base"], environment)
@@ -372,20 +417,20 @@ def evaluate(ast, environment):
         target = ast["target"]
         if target["tag"] == "identifier":
             target_base = environment
-            target_index = target["value"] 
+            target_index = target["value"]
         elif target["tag"] == "complex":
             base, _ = evaluate(target["base"], environment)
             index_ast = target["index"]
-            
+
             if index_ast["tag"] == "string":
                 # direct property (like x.bar)
                 index = index_ast["value"]
             else:
                 # evaluated property (like x["bar"])
                 index, _ = evaluate(index_ast, environment)
-            
+
             assert type(index) in [int, float, str], f"Unknown index type [{index}]"
-        
+
             if isinstance(base, list):
                 assert isinstance(index, int), "List index must be integer"
                 assert 0 <= index < len(base), "List index out of range"
@@ -405,6 +450,33 @@ def evaluate(ast, environment):
             value, exit_status = evaluate(ast["value"], environment)
             return value, "return"
         return None, "return"
+
+    # SWITCH STATEMENT START
+
+    # Break {wasn't implemented}
+    if ast["tag"] == "break":
+        return None, "break"
+
+    # Switch
+    if ast["tag"] == "switch":
+        switch_value, _ = evaluate(ast["condition"], environment)
+
+        for case_clause in ast.get("cases", []):
+            case_value, _ = evaluate(case_clause["expression"], environment)
+            if switch_value == case_value:
+                result, status = evaluate(case_clause["statements"], environment)
+                if status == "break":
+                    return None, None
+                return result, status
+
+        default_clause = ast.get("default")
+        if default_clause:
+            result, status = evaluate(default_clause["statements"], environment)
+            if status == "break":
+                return None, None
+            return result, status
+
+    # SWITCH STATEMENT END
 
     assert False, f"Unknown tag [{ast['tag']}] in AST"
 
@@ -440,7 +512,7 @@ def test_evaluate_single_value():
     equals("X", {"X": 1}, 1)
     equals("Y", {"X": 1, "Y": 2}, 2)
     equals('"x"', {"x": "cat", "y": 2}, "x")
-    equals('x', {"x": "cat", "y": 2}, "cat")
+    equals("x", {"x": "cat", "y": 2}, "cat")
     equals("null", {}, None)
 
 
@@ -450,7 +522,7 @@ def test_evaluate_addition():
     equals("1+2+3", {}, 6, {})
     equals("1.2+2.3+3.4", {}, 6.9, {})
     equals("X+Y", {"X": 1, "Y": 2}, 3)
-    equals("\"X\"+\"Y\"", {}, "XY")
+    equals('"X"+"Y"', {}, "XY")
 
 
 def test_evaluate_subtraction():
@@ -517,17 +589,19 @@ def test_evaluate_assignment_statement():
         {"y": 1, "x": 4, "$parent": {"x": 3}},
     )
 
+
 def test_evaluate_list_literal():
     print("test evaluate_list_literal")
     environment = {}
-    code = '[1,2,3]'
+    code = "[1,2,3]"
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
-    assert result == [1,2,3]
-    code = '[]'
+    assert result == [1, 2, 3]
+    code = "[]"
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert result == []
+
 
 def test_evaluate_object_literal():
     print("test evaluate_object_literal")
@@ -535,29 +609,82 @@ def test_evaluate_object_literal():
     code = '{"a":1,"b":2}'
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
-    assert result == {"a":1,"b":2}
-    code = '{}'
+    assert result == {"a": 1, "b": 2}
+    code = "{}"
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert result == {}
+
 
 def test_evaluate_function_literal():
     print("test evaluate_function_literal")
     code = "f=function(x) {1}"
     ast = parse(tokenize(code))
-    equals(code, {}, {'tag': 'function', 'parameters': [{'tag': 'identifier', 'value': 'x', 'position': 11}], 'body': {'tag': 'statement_list', 'statements': [{'tag': 'number', 'value': 1}]}}, {'f': {'tag': 'function', 'parameters': [{'tag': 'identifier', 'value': 'x', 'position': 11}], 'body': {'tag': 'statement_list', 'statements': [{'tag': 'number', 'value': 1}]}}}
+    equals(
+        code,
+        {},
+        {
+            "tag": "function",
+            "parameters": [{"tag": "identifier", "value": "x", "position": 11}],
+            "body": {
+                "tag": "statement_list",
+                "statements": [{"tag": "number", "value": 1}],
+            },
+        },
+        {
+            "f": {
+                "tag": "function",
+                "parameters": [{"tag": "identifier", "value": "x", "position": 11}],
+                "body": {
+                    "tag": "statement_list",
+                    "statements": [{"tag": "number", "value": 1}],
+                },
+            }
+        },
     )
     code = "function f(x) {1}"
     ast = parse(tokenize(code))
-    equals(code, {}, {'tag': 'function', 'parameters': [{'tag': 'identifier', 'value': 'x', 'position': 11}], 'body': {'tag': 'statement_list', 'statements': [{'tag': 'number', 'value': 1}]}}, {'f': {'tag': 'function', 'parameters': [{'tag': 'identifier', 'value': 'x', 'position': 11}], 'body': {'tag': 'statement_list', 'statements': [{'tag': 'number', 'value': 1}]}}}
+    equals(
+        code,
+        {},
+        {
+            "tag": "function",
+            "parameters": [{"tag": "identifier", "value": "x", "position": 11}],
+            "body": {
+                "tag": "statement_list",
+                "statements": [{"tag": "number", "value": 1}],
+            },
+        },
+        {
+            "f": {
+                "tag": "function",
+                "parameters": [{"tag": "identifier", "value": "x", "position": 11}],
+                "body": {
+                    "tag": "statement_list",
+                    "statements": [{"tag": "number", "value": 1}],
+                },
+            }
+        },
     )
+
 
 def test_evaluate_function_call():
     print("test evaluate_function_call")
     environment = {}
     code = "function f() {return(1234)}"
     result, _ = evaluate(parse(tokenize(code)), environment)
-    assert environment == {'f': {'tag': 'function', 'parameters': [], 'body': {'tag': 'statement_list', 'statements': [{'tag': 'return', 'value': {'tag': 'number', 'value': 1234}}]}}}
+    assert environment == {
+        "f": {
+            "tag": "function",
+            "parameters": [],
+            "body": {
+                "tag": "statement_list",
+                "statements": [
+                    {"tag": "return", "value": {"tag": "number", "value": 1234}}
+                ],
+            },
+        }
+    }
     ast = parse(tokenize("f()"))
     assert ast == {
         "statements": [
@@ -589,7 +716,8 @@ def test_evaluate_function_call():
         """
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
-    assert result == [1,2,3,4]
+    assert result == [1, 2, 3, 4]
+
 
 def test_evaluate_return_statement():
     print("test evaluate_return_statement")
@@ -621,7 +749,7 @@ def test_evaluate_return_statement():
 
 def test_evaluate_complex_expression():
     print("test evaluate_complex_expression")
-    environment = {"x":[2,4,6,8]}
+    environment = {"x": [2, 4, 6, 8]}
     code = "x[3]"
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
@@ -633,18 +761,18 @@ def test_evaluate_complex_expression():
     result, _ = evaluate(ast, environment)
     assert result == 4
 
-    environment = {"x": {"a": [1,2,3], "b": 4}}
+    environment = {"x": {"a": [1, 2, 3], "b": 4}}
     code = 'x["a"]'
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
-    assert result == [1,2,3]
+    assert result == [1, 2, 3]
 
     code = 'x["a"][2]'
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert result == 3
 
-    code = 'x.a[2]'
+    code = "x.a[2]"
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert result == 3
@@ -656,36 +784,37 @@ def test_evaluate_complex_expression():
     result, _ = evaluate(ast, environment)
     assert result == 7
 
-
-    environment = {"x": [[1,2],[3,4]]}
-    code = 'x[0][1]'
+    environment = {"x": [[1, 2], [3, 4]]}
+    code = "x[0][1]"
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert result == 2
 
-    environment = {"x": {"a":{"x":4,"y":6},"b":{"x":5,"y":7}}}
+    environment = {"x": {"a": {"x": 4, "y": 6}, "b": {"x": 5, "y": 7}}}
     code = 'x["b"]["y"]'
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert result == 7
 
+
 def test_evaluate_complex_assignment():
     print("test evaluate_complex_assignment")
-    environment = {"x":[1,2,3]}
-    code = 'x[1]=4'
+    environment = {"x": [1, 2, 3]}
+    code = "x[1]=4"
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert environment["x"][1] == 4
 
-    environment = {"x":{"a":1,"b":2}}
+    environment = {"x": {"a": 1, "b": 2}}
     code = 'x["b"]=4'
     ast = parse(tokenize(code))
     result, _ = evaluate(ast, environment)
     assert environment["x"]["b"] == 4
 
+
 def test_evaluate_builtins():
     print("test evaluate builtins")
-    
+
     # head of list
     equals("head([1,2,3])", {}, 1)
     equals("head([])", {}, None)
@@ -702,7 +831,8 @@ def test_evaluate_builtins():
 
     # keys of object
     equals('keys({"a":1,"b":2})', {}, ["a", "b"])
-    equals('keys({})', {}, [])
+    equals("keys({})", {}, [])
+
 
 def test_evaluator_with_new_tags():
     print("test evaluator with new tags...")
@@ -727,17 +857,42 @@ def test_evaluator_with_new_tags():
 
     # test assignment expressions
     env = {}
-    equals("x=5", env, 5, {"x":5})
-    equals("y=x+2", env, 7, {"x":5, "y":7})
+    equals("x=5", env, 5, {"x": 5})
+    equals("y=x+2", env, 7, {"x": 5, "y": 7})
 
     # test nested assignment expressions
     env = {}
-    equals("a=b=4", env, 4, {"a":4, "b":4})
+    equals("a=b=4", env, 4, {"a": 4, "b": 4})
 
     # test block with or without extra semicolons or bracket statements
-    equals("if(1){x=1; y=2}", {}, None, {"x":1,"y":2})
-    equals("if(1){x=1; y=2;}", {}, None, {"x":1,"y":2})
-    equals("if(1){x=1; if(false) {z=4} y=2;}", {}, None, {"x":1,"y":2})
+    equals("if(1){x=1; y=2}", {}, None, {"x": 1, "y": 2})
+    equals("if(1){x=1; y=2;}", {}, None, {"x": 1, "y": 2})
+    equals("if(1){x=1; if(false) {z=4} y=2;}", {}, None, {"x": 1, "y": 2})
+
+
+def test_evaluate_switch_statement():
+    print("test evaluate switch statement")
+    # simple single‐case
+    equals("x=0; switch(1){case 1{x=1}}; x", {}, 1)
+    # multiple cases, middle match
+    equals("x=0; switch(2){case 1{x=1} case 2{x=2} case 3{x=3}}; x", {}, 2)
+    # only default
+    equals("x=5; switch(1){default{x=100}}; x", {}, 100)
+    # case before default
+    equals("x=0; switch(3){case 3{x=3} default{x=4}}; x", {}, 3)
+    # break stops further cases
+    equals("x=0; switch(1){case 1{x=1; break} case 2{x=2}}; x", {}, 1)
+    # fall‐through is not supported, so default only when no matches
+    equals("x=0; switch(9){case 8{x=8} default{x=42}}; x", {}, 42)
+    # return from inside a switch in a function
+    equals("function f(){ switch(2){case 2{return 20} default{return 0}}}; f()", {}, 20)
+    # nested switch
+    equals("x=0; switch(1){case 1{ switch(2){case 2{x=7}}}}; x", {}, 7)
+    # case expression evaluation
+    equals("x=0; switch(1+1){case 2{x=13}}; x", {}, 13)
+    # default with only return
+    equals("switch(0){default{return 99}}", {}, 99)
+
 
 if __name__ == "__main__":
     # statements and programs are tested implicitly
@@ -760,4 +915,5 @@ if __name__ == "__main__":
     test_evaluate_object_literal()
     test_evaluate_builtins()
     test_evaluator_with_new_tags()
+    test_evaluate_switch_statement()
     print("done.")

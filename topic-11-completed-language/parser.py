@@ -1184,7 +1184,7 @@ def parse_switch_statement(tokens):
     assert tokens[0]["tag"] == "switch"
     tokens = tokens[1:]
     assert tokens[0]["tag"] == "(", f"Expected '(' at position {tokens[0]['position']}"
-    cond, tokens = parse_expression(tokens[1:])
+    condition, tokens = parse_expression(tokens[1:])
     assert tokens[0]["tag"] == ")", f"Expected ')' at position {tokens[0]['position']}"
     tokens = tokens[1:]
     assert tokens[0]["tag"] == "{", f"Expected '{{' at position {tokens[0]['position']}"
@@ -1193,16 +1193,16 @@ def parse_switch_statement(tokens):
     while tokens[0]["tag"] == "case":
         case_node, tokens = parse_case_clause(tokens)
         cases.append(case_node)
-    default_node = None
+    default = None
     if tokens[0]["tag"] == "default":
-        default_node, tokens = parse_default_clause(tokens)
+        default, tokens = parse_default_clause(tokens)
     assert tokens[0]["tag"] == "}", f"Expected '}}' at position {tokens[0]['position']}"
     tokens = tokens[1:]
     return {
         "tag": "switch",
-        "condition": cond,
+        "condition": condition,
         "cases": cases,
-        "default": default_node,
+        "default": default,
     }, tokens
 
 
@@ -1243,8 +1243,8 @@ def test_parse_switch_statement():
     switch_statement = "switch" "(" expression ")" "{" { case_clause } [ default_clause ] "}"
     """
     print("testing parse_switch_statement.")
-    code = "switch(x){case 1{print 1}case 2{print 2}}"
-    ast, tokens = parse_switch_statement(tokenize(code))
+    tokens = "switch(x){case 1{print 1}case 2{print 2}}"
+    ast, tokens = parse_switch_statement(tokenize(tokens))
     assert ast == {
         "tag": "switch",
         "condition": {"tag": "identifier", "value": "x"},
@@ -1270,10 +1270,8 @@ def test_parse_switch_statement():
         ],
         "default": None,
     }
-    # with default
-    code = "switch(y){case 3{print 3}default{print 0}}"
-    ast, tokens = parse_switch_statement(tokenize(code))
-    # ensure tag field is correct
+    tokens = "switch(y){case 3{print 3}default{print 0}}"
+    ast, tokens = parse_switch_statement(tokenize(tokens))
     assert ast["tag"] == "switch"
 
 
