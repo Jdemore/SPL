@@ -15,6 +15,11 @@ patterns = [
     [r"for", "for"],  # for keyword
     [r"break", "break"],  # for keyword
     [r"continue", "continue"],  # for keyword
+    # SWITCH STATEMENT START
+    [r"switch", "switch"],
+    [r"case", "case"],
+    [r"default", "default"],
+    # SWITCH STATEMENT END
     [r"print", "print"],  # print keyword
     [r"import", "import"],  # import keyword
     [r"external", "external"],  # external keyword
@@ -23,7 +28,7 @@ patterns = [
     [r"and", "&&"],  # alternate for &&
     [r"or", "||"],  # alternate for ||
     [r"not", "!"],  # alternate for !
-    [r"assert","assert"],
+    [r"assert", "assert"],
     [r"[a-zA-Z_][a-zA-Z0-9_]*", "identifier"],  # identifiers
     [r"\+", "+"],
     [r"\-", "-"],
@@ -57,6 +62,7 @@ for pattern in patterns:
     pattern[0] = re.compile(pattern[0])
 
 test_generated_tags = set()
+
 
 # The lex/tokenize function
 def tokenize(characters, generated_tags=test_generated_tags):
@@ -233,6 +239,11 @@ def test_keywords():
         "input",
         "print",
         "exit",
+        # SWITCH STATEMENT START
+        "switch",
+        "case",
+        "default",
+        # SWITCH STATEMENT END
     ]:
         t = tokenize(keyword)
         assert len(t) == 2

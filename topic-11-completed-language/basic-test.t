@@ -128,4 +128,58 @@ assert add(2,3) == 5;
 sub = function(x,y) { return x - y}
 assert sub(5,3) == 2;
 
+print "Testing switch cases...";
+
+print "1: multi-statement case block";
+a = 0; b = 0;
+switch(1) {
+case 1 {
+a = 10;
+b = 20;
+}
+};
+assert a == 10;
+assert b == 20;
+
+print "2: break prevents following cases";
+x = 0;
+switch(2) {
+case 1 { x = 1 }
+case 2 { x = 2; break }
+case 2 { x = 3 }
+default { x = 4 }
+};
+assert x == 2;
+
+print "3: default executes when no case matches";
+done = true;
+switch("foo") {
+case "bar" { done = false }
+default      { done = true }
+};
+assert done == true;
+
+print "4: nested switch statements";
+outer = 0; inner = 0;
+switch(3) {
+case 3 {
+outer = 3;
+switch(1) {
+case 1 { inner = 1 }
+}
+}
+};
+assert outer == 3;
+assert inner == 1;
+
+print "5: assignment inside switch instead of expression";
+v = 0;
+switch(0) {
+case 1 { v = 100 }
+default { v = 200 }
+};
+assert v == 200;
+
+print "Switch tests done.";
+
 print "Done."
